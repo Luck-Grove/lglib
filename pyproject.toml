@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lglib"
+authors = [
+    {name="Tyler Etheridge", email="tEtheridge@luckgrove.com"}
+]
+description = "A set of tools to aid in QGIS development"
+version = "0.0.1"
+requires-python = ">=3.9"
