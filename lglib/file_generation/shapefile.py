@@ -38,17 +38,16 @@ class ShapefileFactory:
     def __init__(self, parser: SchemaParser) -> None:
         self.parser = parser
 
-    def create_shapefile(self, schema_name: str, output_fn: str, crs_code: int) -> bool:
+    def create_shapefile(self, schema_name: str, output_fn: str, crs_code: int) -> None:
 
         if Path(output_fn).exists():
             raise FileExistsError(f"File {output_fn} already exists")
 
         schema = self.parser.get_schema(schema_name)
         if schema is None:
-            return False
+            raise KeyError(f"Schema {schema_name} is not available to parser")
 
         driver = "ESRI Shapefile"
         crs = from_epsg(crs_code)
         with fiona.open(output_fn, "w", driver, schema, crs):
             pass
-        return True
