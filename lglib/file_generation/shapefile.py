@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import TypedDict, Optional, Protocol
 
 import fiona
+import geopandas as gpd
 import toml
 from fiona.crs import from_epsg
 
@@ -34,7 +35,9 @@ class TOMLSchemaParser:
         return toml_data
 
 
-class ShapefileFactory:
+class ShapefileWriter:
+    driver = "ESRI Shapefile"
+
     def __init__(self, parser: SchemaParser) -> None:
         self.parser = parser
 
@@ -51,3 +54,14 @@ class ShapefileFactory:
         crs = from_epsg(crs_code)
         with fiona.open(output_fn, "w", driver, schema, crs):
             pass
+
+    def write_shapefile(
+        self,
+        filename: Path,
+        data: gpd.GeoDataFrame,
+        schema: SchemaDict,
+    ) -> Path:
+        data.to_file(
+            filename=str(filename), driver=self.driver, schema=schema, index=False
+        )
+        return filename
