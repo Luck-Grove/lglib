@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import TypedDict, Optional, Protocol
+from typing import TypedDict, Optional, Protocol, Union, Any
 
 import fiona
 import geopandas as gpd
@@ -11,6 +11,24 @@ from fiona.crs import from_epsg
 class SchemaDict(TypedDict):
     geometry: str
     properties: dict[str, str]
+
+
+def is_schema_dict(value: Any) -> bool:
+    if not isinstance(value, dict):
+        return False
+
+    if "geometry" not in value or not isinstance(value["geometry"], str):
+        return False
+
+    if "properties" not in value or not isinstance(value["properties"], dict):
+        return False
+
+    # Uncomment to validate property fields
+    # for key, val in value["properties"].items():
+    #     if not isinstance(key, str) or not isinstance(val, str):
+    #         return False
+
+    return True
 
 
 class SchemaParser(Protocol):
@@ -26,7 +44,10 @@ class TOMLSchemaParser:
     def get_schema(self, schema_name: str) -> Optional[SchemaDict]:
         res = self._data.get(schema_name)
         if res is None:
-            logging.debug(f"Failed to fetch schema for {schema_name}")
+            raise KeyError(
+                f"{self.__class__.__name__} could not retrieve {schema_name=} from "
+                f"data in {self.path}."
+            )
         return res
 
     def load_schema_toml(self) -> dict[str, SchemaDict]:
@@ -47,9 +68,6 @@ class ShapefileWriter:
             raise FileExistsError(f"File {output_fn} already exists")
 
         schema = self.parser.get_schema(schema_name)
-        if schema is None:
-            raise KeyError(f"Schema {schema_name} is not available to parser")
-
         driver = "ESRI Shapefile"
         crs = from_epsg(crs_code)
         with fiona.open(output_fn, "w", driver, schema, crs):
@@ -59,9 +77,22 @@ class ShapefileWriter:
         self,
         filename: Path,
         data: gpd.GeoDataFrame,
-        schema: SchemaDict,
+        schema: Union[SchemaDict, str],
     ) -> Path:
+        """Method to write data from a geodataframe to a shapefile. Must provide either a schema name or
+        a schema dict that can be used to write the file"""
+        if isinstance(schema, str):
+            file_schema = self.parser.get_schema(schema)
+
+        elif is_schema_dict(schema):
+            file_schema = schema
+
+        else:
+            raise ValueError(
+                f"The schema parameter {schema} is neither a string nor SchemaDict."
+            )
+
         data.to_file(
-            filename=str(filename), driver=self.driver, schema=schema, index=False
+            filename=str(filename), driver=self.driver, schema=file_schema, index=False
         )
         return filename
