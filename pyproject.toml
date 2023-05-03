@@ -8,5 +8,5 @@ authors = [
     {name="Tyler Etheridge", email="tEtheridge@luckgrove.com"}
 ]
 description = "A set of tools to aid in QGIS development"
-version = "0.0.2"
+version = "0.0.3"
 requires-python = ">=3.9"
