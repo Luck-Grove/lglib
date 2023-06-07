@@ -4,8 +4,10 @@ from typing import TypedDict, Optional, Protocol, Union, Any
 
 import fiona
 import geopandas as gpd
+import pandas as pd
 import toml
 from fiona.crs import from_epsg
+from abc import ABC, abstractmethod
 
 
 class SchemaDict(TypedDict):
@@ -56,11 +58,21 @@ class TOMLSchemaParser:
         return toml_data
 
 
-class ShapefileWriter:
+class FileWriter(ABC):
+    def __init__(self, parser: SchemaParser) -> None:
+        self.parser = parser
+
+    def write(
+        self, filename: Path, data: pd.DataFrame, schema: Union[SchemaDict, str]
+    ) -> Path:
+        pass
+
+
+class ShapefileWriter(FileWriter):
     driver = "ESRI Shapefile"
 
     def __init__(self, parser: SchemaParser) -> None:
-        self.parser = parser
+        super().__init__(parser)
 
     def create_shapefile(self, schema_name: str, output_fn: str, crs_code: int) -> None:
 
@@ -73,7 +85,7 @@ class ShapefileWriter:
         with fiona.open(output_fn, "w", driver, schema, crs):
             pass
 
-    def write_shapefile(
+    def write(
         self,
         filename: Path,
         data: gpd.GeoDataFrame,
