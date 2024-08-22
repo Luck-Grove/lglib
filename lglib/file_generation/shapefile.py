@@ -105,6 +105,6 @@ class ShapefileWriter(FileWriter):
             )
 
         data.to_file(
-            filename=str(filename), driver=self.driver, schema=file_schema, index=False
+            filename=str(filename), driver=self.driver, engine="fiona", schema=file_schema, index=False
         )
         return filename
